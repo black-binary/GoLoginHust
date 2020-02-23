@@ -3,6 +3,7 @@ package gologinhust
 import (
 	"bytes"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -121,9 +122,12 @@ func GetLoginClient(username string, password string, targetURL string) (*http.C
 		return nil, err
 	}
 
+	if !strings.Contains(resp.Request.URL.String(), "pass.hust.edu.cn") {
+		return nil, errors.New("Didn't redirected to hust pass")
+	}
+
 	body, _ := ioutil.ReadAll(resp.Body)
 	nonce := getNonce(string(body))
-	action := getAction(string(body))
 
 	shit := encrypt(username+password+nonce, "1", "2", "3")
 
@@ -135,27 +139,28 @@ func GetLoginClient(username string, password string, targetURL string) (*http.C
 	postParm.Add("execution", "e1s1")
 	postParm.Add("_eventId", "submit")
 
-	//req, _ = http.NewRequest("POST", "https://pass.hust.edu.cn/cas/login?service="+url.PathEscape(targetURL), strings.NewReader(postParm.Encode()))
-	req, _ = http.NewRequest("POST", "https://pass.hust.edu.cn"+action, strings.NewReader(postParm.Encode()))
+	req, _ = http.NewRequest("POST", "https://pass.hust.edu.cn/cas/login?service="+url.PathEscape(targetURL), strings.NewReader(postParm.Encode()))
+	//action := getAction(string(body))
+	//req, _ = http.NewRequest("POST", "https://pass.hust.edu.cn"+action, strings.NewReader(postParm.Encode()))
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
-	//这一段可以获取ticket
-	/*
-		ticket := ""
-		ticketURL := url.URL{}
+	ticket := ""
 
-		client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
-			t, _ := req.URL.Query()["ticket"]
-			if t != nil && len(t) > 0 {
-				ticket = t[0]
-				//ticketURL = *req.URL
-				fmt.Printf("ticket found %s!\n", ticket)
-			}
-			return nil
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		t, _ := req.URL.Query()["ticket"]
+		if t != nil && len(t) > 0 {
+			ticket = t[0]
+			fmt.Printf("ticket found %s!\n", ticket)
 		}
-	*/
+		return nil
+	}
 	client.Do(req)
 
-	return &client, nil
+	if ticket != "" {
+		return &client, nil
+	} else {
+		return nil, errors.New("Failed to get ticket")
+	}
+
 }
