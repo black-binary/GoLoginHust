@@ -164,3 +164,10 @@ func GetLoginClient(username string, password string, targetURL string) (*http.C
 	}
 
 }
+
+//LogoutClient 注销一个已经登录的Client
+func LogoutClient(client *http.Client) {
+	req, _ := http.NewRequest("GET", "http://pass.hust.edu.cn/portal/logout.jsp", strings.NewReader("?service=http://one.hust.edu.cn"))
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36")
+	client.Do(req)
+}

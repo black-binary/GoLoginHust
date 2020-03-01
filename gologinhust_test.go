@@ -22,4 +22,10 @@ func TestGetLoginClient(t *testing.T) {
 	resp, _ := client.Get("http://hubs.hust.edu.cn/hustpass.action")
 	body, _ := ioutil.ReadAll(resp.Body)
 	fmt.Println(string(body))
+	LogoutClient(client)
+	fmt.Println("-----------------------------------------")
+	resp, _ = client.Get("http://hubs.hust.edu.cn/hustpass.action")
+	body, _ = ioutil.ReadAll(resp.Body)
+	fmt.Println(string(body))
+
 }
